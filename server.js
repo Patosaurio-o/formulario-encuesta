@@ -1,28 +1,36 @@
 const express = require('express');
+const session = require('express-session');
+const flash = require('connect-flash');
 const app = express();
 
-app.use(express.static(__dirname + '/'));
-app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
-app.use('/static', express.static('static'));
+app.use(session({secret: 'mipropiaclave'}));  
+app.use(flash());
+
 app.use( express.json() );
 app.use( express.urlencoded({ extended: true }) );
 
-app.get('/', (req,res) => {
-  res.render('index');
-});
+app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
 
-app.post('/result', (req,res) => {
-  const info = req.body;
-  console.log(info);
-  res.render("result", {
-    nombre : req.body.name,
-    ubicacion : req.body.ubicacion,
-    lenguaje : req.body.lenguaje,
-    comentario : req.body.comentario
-  });
-});
+app.use(express.static(__dirname + '/'));
+
+app.use(require('./routes/microtic'));
+
 
 const server = app.listen(8000, () =>
 console.log(`el server esta usando el puerto: ${server.address().port}!`)
 );
+
+const io = require('socket.io')(server);
+
+io.on('connection', function (socket) {
+  const num = Math.floor(Math.random()*1000);
+  socket.on('DataReq', function (data) { 
+    socket.emit('DataSend', {info:data});
+    console.log(data); 
+  }); 
+  socket.emit('numRandom', {
+    msg: `Tu número aleatorio es: ${num}`
+})
+  socket.emit('mensaje');
+});

@@ -4,22 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Survey form</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <script src="/static/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="../public/css/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/css/styles.css">
   </head>
   <body>
     <div class="container">
       <div class="row">
+        <div class="fondo col-md-6 offset-md-3 mt-5 border border-1 p-4">
+          <div id="contenido"></div>
+          <div id="numRandom"></div>
+        </div>
+      </div>
+      <div class="row">
         <div class="col-md-6 offset-md-3 mt-5 border border-1 p-4">
-          <form class="needs-validation" action="/result" method="POST">
+          <form id="formulario" class="needs-validation" action="/" method="POST">
             <div>
               <label for="nombre" class="form-label">Nombre:</label>
               <input class="form-control" type="text" id="name" name="name" placeholder="Ingrese su nombre" required>
             </div>
             <div> 
               <label for="validationCustom04" class="form-label">Ubicacion del Dojo:</label>
-              <select class="form-select" name="ubicacion" id="validationCustom04" required>
+              <select class="form-select" name="ubicacion" id="ubicacion" required>
                 <option selected disabled value="">selecciona la ubicacion</option>
                 <option value="Chile">Chile</option>
                 <option value="Estados Unidos">Estados Unidos</option>
@@ -30,7 +37,7 @@
             </div>
             <div>
               <label class="form-label">Lenguaje Favorito:</label>
-              <select class="form-select" name="lenguaje" id="validationCustom04" required>
+              <select class="form-select" name="lenguaje" id="lenguaje" required>
                 <option selected disabled value="">selecciona tu lenguaje</option>
                 <option value="JavasCript">JavaScript</option>
                 <option value="c#">c#</option>
@@ -41,12 +48,43 @@
             </div>
             <div>
               <label class="form-label">comentario (opcional):</label></br>
-              <textarea class="form-control input-group-text" name="comentario" cols="30" rows="7"></textarea>
+              <textarea class="form-control input-group-text" id="coment" name="comentario" cols="30" rows="7"></textarea>
             </div>
-            <a href="result"><button class="btn btn-primary mt-3" type="submit">enviar</button></a>
+            <button id="btn-form" class="btn btn-primary mt-3" type="submit">enviar</button>
           </form>
         </div>
       </div>
     </div>
+    <script type ="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type ="text/javascript">
+      $(document).ready(function (){
+        const socket = io("http://localhost:8000");
+        $('#btn-form').on('click', function(){
+          socket.emit('DataReq', {
+            nombre: $('#name').val(),
+            ubicacion: $('#ubicacion').val(),
+            lenguaje: $('#lenguaje').val(),
+            comentario: $('#coment').val()
+          }); 
+        });
+        socket.on('DataSend', function (data){
+          $("#contenido").html(`
+            <span>
+              You emited the followin information to the server: {
+              name:'${data.info.nombre}', 
+              location:'${data.info.ubicacion}', 
+              language:'${data.info.lenguaje}', 
+              comment:'${data.info.comentario}'}
+            </span>`
+          )
+        });
+        socket.on('numRandom', function(data){
+          $("#numRandom").html(data.msg)
+        })
+      });      
+      $("#formulario").on("submit", function (event) {
+        event.preventDefault()
+      });
+    </script>
   </body>
 </html>
